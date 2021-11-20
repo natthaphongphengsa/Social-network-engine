@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31911.196
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TDDInlämningsuppgift", "TDDInlämningsuppgift\TDDInlämningsuppgift.csproj", "{AFB82DB1-0229-4142-9AC9-5C436CC80A5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUserBehavior", "TestUserBehavior\TestUserBehavior.csproj", "{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AFB82DB1-0229-4142-9AC9-5C436CC80A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFB82DB1-0229-4142-9AC9-5C436CC80A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFB82DB1-0229-4142-9AC9-5C436CC80A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFB82DB1-0229-4142-9AC9-5C436CC80A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5C0B0947-0946-4355-A699-4A3A193CC90A}
+	EndGlobalSection
+EndGlobal
