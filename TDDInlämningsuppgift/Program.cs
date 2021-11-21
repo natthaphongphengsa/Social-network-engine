@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -168,6 +169,8 @@ namespace TDDInlämningsuppgift
                     case "4":
                         break;
                     case "5":
+                        Console.Clear();
+                        Console.WriteLine("My TimeLine:");
                         CreatePostPage(user);
                         break;
                     case "6":
@@ -183,7 +186,15 @@ namespace TDDInlämningsuppgift
         }
         static void TimeLine(User user)
         {
-
+            var database = new ApplicationDb();
+            var postList = database.Posters.Include(u => u.PostedBy).Where(p => p.PostedBy == user).ToList();
+            foreach (var post in postList)
+            {
+                Console.WriteLine($"{post.PostedBy.Username}: {post.Message}");
+            }
+            Console.WriteLine("Press ESC to go back......");
+            var key = Console.ReadKey();
+            if (key.Key == ConsoleKey.Escape) {}
         }
         static void CreatePostPage(User user)
         {

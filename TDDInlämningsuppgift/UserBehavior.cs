@@ -29,17 +29,9 @@ namespace TDDInlämningsuppgift
                 return false;
             }
         }
-        public List<Post> ReadAnotherPosters()
+        public bool FollowAnotherUser(string user1, string user2)
         {
-            return null;
-        }
-        public bool FollowAnotherUser()
-        {
-            return true;
-        }
-        public List<User> FollowingList()
-        {
-            return null;
+            return false;
         }
     }
 }
