@@ -10,8 +10,8 @@ using TDDInlämningsuppgift.Data;
 namespace TDDInlämningsuppgift.Migrations
 {
     [DbContext(typeof(ApplicationDb))]
-    [Migration("20211122101327_AddDateTime")]
-    partial class AddDateTime
+    [Migration("20211124163609_AddMessageSender2")]
+    partial class AddMessageSender2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -20,6 +20,29 @@ namespace TDDInlämningsuppgift.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.12")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("TDDInlämningsuppgift.Model.Chat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("SendToId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SendToId");
+
+                    b.ToTable("Chats");
+                });
 
             modelBuilder.Entity("TDDInlämningsuppgift.Model.Post", b =>
                 {
@@ -80,6 +103,15 @@ namespace TDDInlämningsuppgift.Migrations
                     b.ToTable("UserUser");
                 });
 
+            modelBuilder.Entity("TDDInlämningsuppgift.Model.Chat", b =>
+                {
+                    b.HasOne("TDDInlämningsuppgift.User", "SendTo")
+                        .WithMany("Chats")
+                        .HasForeignKey("SendToId");
+
+                    b.Navigation("SendTo");
+                });
+
             modelBuilder.Entity("TDDInlämningsuppgift.Model.Post", b =>
                 {
                     b.HasOne("TDDInlämningsuppgift.User", "PostedBy")
@@ -106,6 +138,8 @@ namespace TDDInlämningsuppgift.Migrations
 
             modelBuilder.Entity("TDDInlämningsuppgift.User", b =>
                 {
+                    b.Navigation("Chats");
+
                     b.Navigation("posters");
                 });
 #pragma warning restore 612, 618

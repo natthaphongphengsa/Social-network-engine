@@ -20,5 +20,7 @@ namespace TDDInlämningsuppgift
         public List<Post> posters { get; set; }
         public List<User> Follower { get; set; }
         public List<User> Following { get; set; }
+        public List<Chat> Chats { get; set; }
+
     }
 }

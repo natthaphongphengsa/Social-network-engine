@@ -10,7 +10,7 @@ using TDDInlämningsuppgift.Model;
 namespace TestUserBehavior
 {
     [TestClass]
-    public class UnitTest1
+    public class UserBehaviorTest
     {
         [TestMethod]
         [DataRow(true, "Hello test1", "Alice123")]
@@ -36,13 +36,21 @@ namespace TestUserBehavior
 
         }
         [TestMethod]
-        [DataRow(true, "Alice123", "Bob123")]
-        public void FollowTest(bool succesFollow, string me, string anotherUser)
+        [DataRow(false, "Alice123", "Bob123")]
+        public void FollowTest(bool ExpectedValue, string user, string anotherUser)
         {
             var database = new ApplicationDb();
+            User me = database.Users.First(u => u.Username == user);
+
             var userBehavior = new UserBehavior(database);
-            bool actual = userBehavior.FollowAnotherUser(me, anotherUser);
-            Assert.AreEqual(succesFollow, actual);
+            bool actual = userBehavior.StartFollow(me, anotherUser);
+
+            Assert.AreEqual(ExpectedValue, actual);
+        }
+        [TestMethod]
+        public void StopFollow()
+        {
+
         }
     }
 }

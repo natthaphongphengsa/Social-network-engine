@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TDDInlämningsuppgift.Migrations
 {
@@ -22,12 +23,34 @@ namespace TDDInlämningsuppgift.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Chats",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SendById = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Chats", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Chats_Users_SendById",
+                        column: x => x.SendById,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Posters",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Datum = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PostedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -66,6 +89,11 @@ namespace TDDInlämningsuppgift.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Chats_SendById",
+                table: "Chats",
+                column: "SendById");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Posters_PostedById",
                 table: "Posters",
                 column: "PostedById");
@@ -78,6 +106,9 @@ namespace TDDInlämningsuppgift.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Chats");
+
             migrationBuilder.DropTable(
                 name: "Posters");
 
