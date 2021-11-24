@@ -48,7 +48,7 @@ namespace TDDInlämningsuppgift
             bool loop = false;
             do
             {
-                Console.Clear();                
+                Console.Clear();
                 Console.WriteLine("Username:");
                 string username = Console.ReadLine();
                 Console.WriteLine("Your name:");
@@ -110,7 +110,7 @@ namespace TDDInlämningsuppgift
                 else if (!database.Users.Any(u => u.Username == username && u.Password == password))
                 {
                     Console.WriteLine("Invalid!");
-                    Console.WriteLine("Press ESC to go back to menu");
+                    Console.WriteLine("Press ESC to go back to menu or press any key to try again");
                     var key = Console.ReadKey();
                     if (key.Key == ConsoleKey.Escape)
                     {
@@ -134,7 +134,7 @@ namespace TDDInlämningsuppgift
             List<Post> postList = new List<Post>();
             if (database.Posters.Any(u => u.PostedBy == user) == true)
             {
-                var posters = database.Posters.First(u => u.PostedBy == user);
+                var posters = database.Posters.FirstOrDefault(u => u.PostedBy == user);
                 postList.Add(posters);
             }
 
@@ -160,9 +160,15 @@ namespace TDDInlämningsuppgift
                 switch (alternative)
                 {
                     case "1":
+                        Console.Clear();
+                        Console.WriteLine("TimeLine");
                         TimeLine(user);
                         break;
                     case "2":
+                        Console.Clear();
+                        Console.WriteLine("friends list in sweden");
+                        FriendsList();
+                        Console.ReadKey();
                         break;
                     case "3":
                         break;
@@ -170,12 +176,13 @@ namespace TDDInlämningsuppgift
                         break;
                     case "5":
                         Console.Clear();
-                        Console.WriteLine("My TimeLine:");
                         CreatePostPage(user);
                         break;
                     case "6":
                         break;
                     case "7":
+                        Console.Clear();
+                        loop = true;
                         break;
                     default:
                         loop = false;
@@ -184,17 +191,41 @@ namespace TDDInlämningsuppgift
                 }
             } while (loop != true);
         }
+
+        static void FriendsList()
+        {
+            var database = new ApplicationDb();
+            int count = 1;
+            int followerCount = 0;
+            int followingCount = 0;
+            foreach (var users in database.Users.ToList())
+            {
+                if (users.Following != null || users.Follower != null)
+                {
+                    followingCount = users.Following.Count();
+                    followerCount = users.Follower.Count();
+                    Console.WriteLine($"Nr {count}: {users.Name} Follower: {followerCount} Following: {followingCount.ToString()}");
+                    count++;
+                }
+                else
+                {
+                    Console.WriteLine($"Nr {count}: {users.Name} Follower: {followerCount} Following: {followingCount.ToString()}");
+                    count++;
+                }
+            }
+        }
+
         static void TimeLine(User user)
         {
             var database = new ApplicationDb();
             var postList = database.Posters.Include(u => u.PostedBy).Where(p => p.PostedBy == user).ToList();
             foreach (var post in postList)
             {
-                Console.WriteLine($"{post.PostedBy.Username}: {post.Message}");
+                Console.WriteLine($"{post.Datum.ToString("g")}AM {post.PostedBy.Username}: {post.Message}");
             }
-            Console.WriteLine("Press ESC to go back......");
+            Console.WriteLine("Press any key to go back......");
             var key = Console.ReadKey();
-            if (key.Key == ConsoleKey.Escape) {}
+            //if (key.Key == ConsoleKey.Escape) {}
         }
         static void CreatePostPage(User user)
         {
@@ -207,6 +238,7 @@ namespace TDDInlämningsuppgift
                 Console.WriteLine("Write your post here:");
                 post.Message = Console.ReadLine();
                 post.PostedBy = database.Users.First(u => u.Username == user.Username);
+                post.Datum = DateTime.Now;
 
                 var userBehavior = new UserBehavior(database);
                 var result = userBehavior.Post(post);
@@ -215,6 +247,7 @@ namespace TDDInlämningsuppgift
                 {
                     Console.Clear();
                     Console.WriteLine("Successfully added new post");
+                    Console.WriteLine("Press any key to go back to profile");
                     Console.ReadKey();
                     loop = true;
                 }

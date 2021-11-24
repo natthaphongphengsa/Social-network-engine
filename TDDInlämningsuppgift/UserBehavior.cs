@@ -29,9 +29,30 @@ namespace TDDInlämningsuppgift
                 return false;
             }
         }
-        public bool FollowAnotherUser(string user1, string user2)
+        public bool FollowAnotherUser(string me, string anotherUser)
         {
-            return false;
+            if (_database.Users.Any(u => u.Username == me) && _database.Users.Any(u => u.Username == anotherUser))
+            {
+                var user = _database.Users.First(u => u.Username == me);
+                var anotheruser = _database.Users.First(u => u.Username == anotherUser);
+
+                List<User> FollowongUserList = new List<User>();
+                FollowongUserList.Add(anotheruser);
+                user.Following = FollowongUserList;
+
+                _database.Update(user);
+                _database.SaveChanges();
+                return true;
+            }
+            else
+                return false;
+        }
+        public List<Post> TimeLine(User user)
+        {
+            var post = _database.Posters.Where(p => p.PostedBy == user).Include(User => user.Following).ToList();
+
+            List<Post> postList = new List<Post>();
+            return postList;
         }
     }
 }

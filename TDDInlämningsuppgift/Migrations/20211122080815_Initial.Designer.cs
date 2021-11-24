@@ -10,7 +10,7 @@ using TDDInlämningsuppgift.Data;
 namespace TDDInlämningsuppgift.Migrations
 {
     [DbContext(typeof(ApplicationDb))]
-    [Migration("20211120204535_Initial")]
+    [Migration("20211122080815_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -12,6 +12,7 @@ namespace TDDInlämningsuppgift.Model
     {
         public int Id { get; set; }
         public string Message { get; set; }
+        public DateTime Datum { get; set; }
         public User PostedBy { get; set; }
     }
 }
