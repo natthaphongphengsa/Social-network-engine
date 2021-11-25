@@ -31,13 +31,13 @@ namespace TDDInlämningsuppgift
         }
         public void SendMessage(User to, User from, string message)
         {
-            Chat chat = new Chat();
-            chat.Text = message;
-            chat.SendTo = to;
-            chat.SendFromId = from.Id;
-            chat.Date = DateTime.Now;
-
-            _database.Chats.Add(chat);
+            _database.Chats.Add(new Chat()
+            {
+                SendFromId = from.Id,
+                SendTo = _database.Users.First(u => u.Id == to.Id),
+                Date = DateTime.Now,
+                Text = message,
+            });
             _database.SaveChanges();
         }
         public bool StartFollow(User me, string anotherUser)
@@ -88,11 +88,10 @@ namespace TDDInlämningsuppgift
             else
                 return false;
         }
-        public List<Post> TimeLine(User user)
+        public List<Post> GetTimeLine(string user)
         {
-            var post = _database.Posters.Where(p => p.PostedBy == user).Include(User => user.Following).ToList();
+            var postList = _database.Posters.Include(user => user.PostedBy).ToList();
 
-            List<Post> postList = new List<Post>();
             return postList;
         }
     }
