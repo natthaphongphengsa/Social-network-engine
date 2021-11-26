@@ -52,6 +52,130 @@ namespace TDDInlämningsuppgift
                 }
             } while (loop != true);
         }
+        public static void Profile(User me)
+        {
+            var myProfile = database.Users.Include(f => f.Following).Include(f => f.Follower).First(u => u == me);
+            bool loop = false;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("COMMAND LIST: [post, timeline, follow, wall, post @username, friendlist, log_out, send_message, view_message]");
+                Console.WriteLine("");
+                Console.WriteLine("Welcome to facebook!");
+                Console.WriteLine("My profile:");
+                Console.WriteLine($"Hello {myProfile.Username}!");
+                Console.WriteLine("");
+                Console.Write($"> {user.Username} /");
+                string alternative = Console.ReadLine();
+
+                if (alternative != "")
+                {
+                    Console.Clear();
+                    Command commando = new Command();
+                    try
+                    {
+                        if (alternative.IndexOf(' ') != -1)
+                        {
+                            commandString = alternative.Remove(alternative.IndexOf(' '));
+                            userString = alternative.Remove(0, commandString.Length + 1);
+                            commando = (Command)Enum.Parse(typeof(Command), commandString);
+                        }
+                        else
+                            commando = (Command)Enum.Parse(typeof(Command), alternative);
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("No command was found!");
+                        Console.ReadKey();
+                        loop = false;
+                    }
+                    switch (commando)
+                    {
+                        case Command.timeline:
+                            Timeline(me, userString);
+                            Console.ReadKey();
+                            break;
+                        case Command.follow:
+                            Follow(user, userString);
+                            Console.ReadKey();
+                            break;
+                        case Command.post:
+                            Post post = new Post();
+                            post.Message = userString;
+                            post.PostedBy = user;
+                            post.Datum = DateTime.Now;
+                            bool result = userbehavior.Post(post);
+                            if (result == true)
+                            {
+                                Console.WriteLine("Successfully create a new post.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Failed post");
+                            }
+                            Console.ReadKey();
+                            break;
+                        case Command.wall:
+                            Wall(user);
+                            loop = false;
+                            break;
+                        case Command.send_message:
+                            break;
+                        case Command.friendlist:
+                            FriendsList(me);
+                            Console.ReadKey();
+                            break;
+                        default:
+                            loop = false;
+                            break;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid command!");
+                    Console.ReadKey();
+                }
+            } while (loop != true);
+        }
+        public static void Timeline(User me, string username)
+        {
+            var userTimeline = userbehavior.GetTimeline(username);
+            var result = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == username);
+
+            Console.WriteLine($"{result.Username} is following:");
+            if (result.Following == null)
+            {
+                Console.WriteLine($"{result.Username} did not follow anyone");
+            }
+            else
+            {
+                foreach (var user in result.Following)
+                {
+                    Console.WriteLine($"{user.Username}");
+                }
+            }
+            Console.WriteLine("");
+            //if (result.Follower.Any(u => u.Username == me.Username) != true || result.Follower.Any(u => u.Username != me.Username))
+            //{
+            //    if (result.Following == null)
+            //    {
+            //        Console.WriteLine($"{result.Username} did not follow anyone");
+            //    }
+            //    else
+            //    {
+            //        foreach (var user in result.Following)
+            //        {
+            //            Console.WriteLine($"{user.Username}");
+            //        }
+            //    }
+            //}
+            Console.WriteLine($"{result.Username}s Timeline:");
+            foreach (var post in userTimeline)
+            {
+                Console.WriteLine($"{post.Datum.ToString("f")} ({post.PostedBy.Username}): {post.Message}");
+            }
+            Console.ReadKey();
+        }
         public static void CreateAccount()
         {
             bool loop = false;
@@ -86,101 +210,6 @@ namespace TDDInlämningsuppgift
                 }
 
             } while (loop != true);
-        }
-        public static void Profile(User me)
-        {
-            var myProfile = database.Users.Include(f => f.Following).Include(f => f.Follower).First(u => u == me);
-            bool loop = false;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("COMMAND LIST: [Post, Timeline, Follow, Wall, Post @username, friendlist, Log out]");
-                Console.WriteLine("");
-                Console.WriteLine("Welcome to facebook!");
-                Console.WriteLine("My profile:");
-                Console.WriteLine($"Hello {myProfile.Username}!");
-                Console.WriteLine("");
-                Console.Write($"> {user.Username} /");
-                string alternative = Console.ReadLine();
-
-                if (alternative != "")
-                {
-                    Console.Clear();
-                    Command commando = new Command();
-                    try
-                    {
-                        commandString = alternative.Remove(alternative.IndexOf(' '));
-                        userString = alternative.Remove(0, commandString.Length + 1);
-                        commando = (Command)Enum.Parse(typeof(Command), commandString);
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("No command was found!");
-                        Console.ReadKey();
-                        loop = false;
-                    }
-                    switch (commando)
-                    {
-                        case Command.timeline:
-                            Timeline(me, userString);
-                            Console.ReadKey();
-                            break;
-                        case Command.follow:
-                            Follow(user, userString);
-                            Console.ReadKey();
-                            break;
-                        case Command.post:
-                            userbehavior.Post(user, userString);
-                            Console.ReadKey();
-                            break;
-                        case Command.wall:
-                            Wall(user);
-                            loop = false;
-                            break;
-                        case Command.send_message:
-                            break;
-                        case Command.friendlist:
-                            FriendsList();
-                            Console.ReadKey();
-                            break;
-                        default:
-                            loop = false;
-                            break;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Invalid command!");
-                    Console.ReadKey();
-                }
-            } while (loop != true);
-        }
-        public static void Timeline(User me, string username)
-        {
-            var userTimeline = userbehavior.GetTimeline(username);
-            var result = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == username);
-
-            Console.WriteLine($"{result.Username} is following:");
-            if (result.Follower.Any(u => u.Username == me.Username) == true)
-            {
-                if (result.Following is null)
-                {
-                    Console.WriteLine($"{result.Username} did not follow any one");
-                }
-                else
-                {
-                    foreach (var user in result.Following)
-                    {
-                        Console.WriteLine($"{user.Username}");
-                    }
-                }
-            }
-            Console.WriteLine($"{result.Username}s Timeline:");
-            foreach (var post in userTimeline)
-            {
-                Console.WriteLine($"{post.Datum.ToString("f")} {post.PostedBy.Username}: {post.Message}");
-            }
-            Console.ReadKey();
         }
         public static void Follow(User me, string username)
         {
@@ -317,17 +346,33 @@ namespace TDDInlämningsuppgift
                 }
             } while (loop != false);
         }
-        public static void FriendsList()
+        public static void FriendsList(User me)
         {
-            foreach (var users in database.Users.Include(f => f.Follower).Include(f => f.Following).ToList())
+            foreach (var users in database.Users.Include(f => f.Follower).Include(f => f.Following).Where(u => u == me))
             {
                 if (users.Following != null || users.Follower != null)
                 {
-                    Console.WriteLine($"{users.Username} Follower: {users.Follower.Count} Following: {users.Following.Count()}");
+                    Console.WriteLine($"{users.Username} is following:");
+                    foreach (var firstUser in users.Following.ToList())
+                    {
+                        if (firstUser.Following != null)
+                        {
+                            Console.WriteLine($"{firstUser.Username} is following");
+                            foreach (var secoundUser in firstUser.Following)
+                            {
+                                Console.WriteLine($"{secoundUser.Username}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{firstUser.Username} did not follow anyone");
+                        }
+                    }
+                    //Console.WriteLine($"{users.Username} Follower: {users.Follower.Count} Following: {users.Following.Count()}");
                 }
                 else
                 {
-                    Console.WriteLine($"{users.Username} Follower: {users.Follower.Count()} Following: {users.Following.Count()}");
+                    //Console.WriteLine($"{users.Username} Follower: {users.Follower.Count()} Following: {users.Following.Count()}");
                 }
             }
         }

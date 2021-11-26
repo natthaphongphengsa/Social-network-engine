@@ -16,14 +16,9 @@ namespace TDDInlämningsuppgift
         {
             database = dbcontext;
         }
-        public bool Post(User user, string message)
+        public bool Post(Post post)
         {
-            Post post = new Post();
-            post.Message = message;
-            post.PostedBy = user;
-            post.Datum = DateTime.Now;
-
-            if (database.Posters.Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy) != true)
+            if (!database.Posters.Include(u => u.PostedBy).Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy))
             {
                 database.Posters.Add(post);
                 database.SaveChanges();

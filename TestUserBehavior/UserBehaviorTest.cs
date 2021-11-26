@@ -21,8 +21,13 @@ namespace TestUserBehavior
             var _database = new ApplicationDb();
             User testUser = _database.Users.First(u => u.Username == user);
 
+            Post post = new Post();
+            post.Message = message;
+            post.PostedBy = testUser;
+            post.Datum = DateTime.Now;
+
             var userBehavior = new UserBehavior(_database);
-            var resultValue = userBehavior.Post(testUser, message);
+            var resultValue = userBehavior.Post(post);
 
             Assert.AreEqual(expected, resultValue);
         }
