@@ -117,7 +117,7 @@ namespace TDDInlämningsuppgift
                             break;
                         case Command.wall:
                             Wall(user);
-                            loop = false;
+                            Console.ReadKey();
                             break;
                         case Command.send_message:
                             break;
@@ -348,24 +348,32 @@ namespace TDDInlämningsuppgift
         }
         public static void FriendsList(User me)
         {
-            foreach (var users in database.Users.Include(f => f.Follower).Include(f => f.Following).Where(u => u == me))
+        }
+        public static void Wall(User me)
+        {
+            var myself = database.Users.Include(f => f.Follower).Include(f => f.Following).Where(u => u.Username == me.Username).ToList();
+            foreach (var FollowingUserList in myself)
             {
-                if (users.Following != null || users.Follower != null)
+                if (FollowingUserList.Following != null)
                 {
-                    Console.WriteLine($"{users.Username} is following:");
-                    foreach (var firstUser in users.Following.ToList())
+                    Console.WriteLine($"My following user list:");
+                    foreach (var firstStepUser in FollowingUserList.Following.ToList())
                     {
-                        if (firstUser.Following != null)
+                        var secoundStepUser = database.Users.Include(f => f.Follower).Include(f => f.Following).Where(u => u.Username == firstStepUser.Username).ToList();
+                        Console.WriteLine($">{firstStepUser.Username} following list");
+                        foreach (var thirdStepUser in secoundStepUser)
                         {
-                            Console.WriteLine($"{firstUser.Username} is following");
-                            foreach (var secoundUser in firstUser.Following)
+                            if (thirdStepUser.Following != null)
                             {
-                                Console.WriteLine($"{secoundUser.Username}");
+                                foreach (var secoundUser in thirdStepUser.Following)
+                                {
+                                    Console.WriteLine($">>{secoundUser.Username}");
+                                }
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"{firstUser.Username} did not follow anyone");
+                            else
+                            {
+                                Console.WriteLine($">>{thirdStepUser.Username} did not follow anyone");
+                            }
                         }
                     }
                     //Console.WriteLine($"{users.Username} Follower: {users.Follower.Count} Following: {users.Following.Count()}");
@@ -374,14 +382,6 @@ namespace TDDInlämningsuppgift
                 {
                     //Console.WriteLine($"{users.Username} Follower: {users.Follower.Count()} Following: {users.Following.Count()}");
                 }
-            }
-        }
-        public static void Wall(User me)
-        {
-            var users = database.Users.Include(f => f.Following).Include(f => f.Follower).Where(u => u == me).ToList();
-            foreach (var user in users)
-            {
-                Console.WriteLine($"{user.Username}");
             }
         }
     }
