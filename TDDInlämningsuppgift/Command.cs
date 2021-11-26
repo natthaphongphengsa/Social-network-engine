@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TDDInlämningsuppgift.Data
-{    public enum command
+namespace TDDInlämningsuppgift
+{
+    public enum Command
     {
         timeLine,
         post,
@@ -13,10 +14,12 @@ namespace TDDInlämningsuppgift.Data
         view_messages,
         timeline,
         follow,
-        followers,
-        following,
         wall,
-        chats,
-        friends
+        friendlist
+    }
+    public enum Result
+    {
+        IsSuccess,
+        IsFaild,
     }
 }

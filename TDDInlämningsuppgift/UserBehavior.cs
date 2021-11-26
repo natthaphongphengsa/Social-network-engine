@@ -11,17 +11,22 @@ namespace TDDInlämningsuppgift
 {
     public class UserBehavior
     {
-        public ApplicationDb _database;
+        public ApplicationDb database;
         public UserBehavior(ApplicationDb dbcontext)
         {
-            _database = dbcontext;
+            database = dbcontext;
         }
-        public bool Post(Post post)
+        public bool Post(User user, string message)
         {
-            if (_database.Posters.Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy) != true)
+            Post post = new Post();
+            post.Message = message;
+            post.PostedBy = user;
+            post.Datum = DateTime.Now;
+
+            if (database.Posters.Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy) != true)
             {
-                _database.Posters.Add(post);
-                _database.SaveChanges();
+                database.Posters.Add(post);
+                database.SaveChanges();
                 return true;
             }
             else
@@ -31,68 +36,46 @@ namespace TDDInlämningsuppgift
         }
         public void SendMessage(User to, User from, string message)
         {
-            _database.Chats.Add(new Chat()
+            database.Chats.Add(new Chat()
             {
                 SendFromId = from.Id,
-                SendTo = _database.Users.First(u => u.Id == to.Id),
+                SendTo = database.Users.First(u => u.Id == to.Id),
                 Date = DateTime.Now,
                 Text = message,
             });
-            _database.SaveChanges();
+            database.SaveChanges();
         }
-        public bool StartFollow(User me, string anotherUser)
+        public Result StartFollow(User me, string anotherUser)
         {
-            if (_database.Users.Any(u => u.Username == me.Username) && _database.Users.Any(u => u.Username == anotherUser))
+            if (database.Users.Any(u => u.Username == me.Username) && database.Users.Any(u => u.Username == anotherUser))
             {
-                var user = _database.Users.First(u => u.Username == me.Username);
-                var anotheruser = _database.Users.First(u => u.Username == anotherUser);
-
-                List<User> FollowingUserList = new List<User>();
-                FollowingUserList.Add(anotheruser);
+                var user = database.Users.Include(u => u.Following).Include(u => u.Follower).First(u => u.Username == me.Username);
+                var anotheruser = database.Users.Include(u => u.Following).Include(u => u.Follower).First(u => u.Username == anotherUser);
 
                 if (user != anotheruser)
                 {
                     if (!user.Following.Any(u => u == anotheruser))
                     {
-                        user.Following = FollowingUserList;
-                        _database.Update(user);
-                        _database.SaveChanges();
-                        return true;
+                        user.Following.Add(anotheruser);
+                        database.Update(user);
+                        database.SaveChanges();
+                        return Result.IsSuccess;
                     }
                 }
-                return false;
+                return Result.IsFaild;
             }
             else
-                return false;
+                return Result.IsFaild;
         }
-        public bool StopFollow(User me, string anotherUser)
+        public List<Post> GetTimeline(string user)
         {
-            if (_database.Users.Any(u => u.Username == anotherUser))
-            {
-                var user = _database.Users.Include(u => u.Following).First(u => u.Username == me.Username);
-                var anotheruser = _database.Users.First(u => u.Username == anotherUser);
-
-                if (user != anotheruser)
-                {
-                    if (!user.Following.Any(u => u == anotheruser))
-                    {
-                        user.Following.Remove(anotheruser);
-
-                        _database.Update(user);
-                        _database.SaveChanges();
-                        return true;
-                    }
-                }
-                return false;
-            }
-            else
-                return false;
-        }
-        public List<Post> GetTimeLine(string user)
-        {
-            var postList = _database.Posters.Include(user => user.PostedBy).ToList();
-
+            var postList = database.Posters.Include(user => user.PostedBy).Include(f => f.PostedBy.Following).Include(f => f.PostedBy.Follower).Where(u => u.PostedBy.Username == user).ToList();
             return postList;
+        }
+        public List<User> GetFollowingList(string username)
+        {
+            var followingList = database.Users.First(u => u.Username == username).Following;
+            return followingList;
         }
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -13,20 +14,15 @@ namespace TestUserBehavior
     public class UserBehaviorTest
     {
         [TestMethod]
-        [DataRow(true, "Hello test1", "Alice123")]
-        [DataRow(true, "Today is to cold ", "Bob123")]
+        [DataRow(false, "What a wonderfully sunny day!", "Alice")]
+        [DataRow(false, "Today is to cold ", "Bob")]
         public void PostTest(bool expected, string message, string user)
         {
             var _database = new ApplicationDb();
             User testUser = _database.Users.First(u => u.Username == user);
 
-            var newPost = new Post();
-            newPost.PostedBy = testUser;
-            newPost.Message = message;
-            newPost.Datum = DateTime.Now;
-
             var userBehavior = new UserBehavior(_database);
-            var resultValue = userBehavior.Post(newPost);
+            var resultValue = userBehavior.Post(testUser, message);
 
             Assert.AreEqual(expected, resultValue);
         }
@@ -36,19 +32,39 @@ namespace TestUserBehavior
 
         }
         [TestMethod]
-        [DataRow(false, "Alice123", "Bob123")]
-        public void FollowTest(bool ExpectedValue, string user, string anotherUser)
+        [DataRow(Result.IsFaild, "Alice", "Bob")]
+        public void FollowTest(Result ExpectedValue, string user, string anotherUser)
         {
             var database = new ApplicationDb();
             User me = database.Users.First(u => u.Username == user);
 
             var userBehavior = new UserBehavior(database);
-            bool actual = userBehavior.StartFollow(me, anotherUser);
+            var actual = userBehavior.StartFollow(me, anotherUser);
 
             Assert.AreEqual(ExpectedValue, actual);
         }
         [TestMethod]
-        public void StopFollow()
+        public void GetTimelineTest()
+        {
+            var database = new ApplicationDb();
+            var userBehavior = new UserBehavior(database);
+            List<Post> result = userBehavior.GetTimeline("Alice").ToList();
+
+            var user = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == "Alice");
+
+            Post newPost = new Post()
+            {
+                Message = "What a wonderfully sunny day!",
+                PostedBy = user
+            };
+            List<Post> expectedList = new List<Post>();
+            expectedList.Add(newPost);
+
+
+            Assert.AreEqual(expectedList, result);
+        }
+        [TestMethod]
+        public void SendMessageTest()
         {
 
         }

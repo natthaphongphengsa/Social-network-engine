@@ -7,351 +7,199 @@ using System.IO;
 using System.Linq;
 using TDDInlämningsuppgift.Data;
 using TDDInlämningsuppgift.Model;
+using TDDInlämningsuppgift;
 
 namespace TDDInlämningsuppgift
 {
     public class Program
     {
-        static ApplicationDb database => new ApplicationDb();
-        static void Main(string[] args)
+        public static ApplicationDb database => new ApplicationDb();
+        public static AccountManagement manager => new AccountManagement(database);
+
+        public static UserBehavior userbehavior = new UserBehavior(database);
+        public static User user { get; set; } = new User();
+
+        public static string commandString { get; set; }
+        public static string userString { get; set; }
+
+        public static void Main(string[] args)
         {
-            DataInitializer.SeedData();
             bool loop = false;
             do
             {
                 Console.Clear();
                 Console.WriteLine("Welcome to facebook!");
-                Console.WriteLine("1: Login");
-                Console.WriteLine("2: Create Account");
-                Console.WriteLine("3: Exit");
-                string altenative = Console.ReadLine();
-                switch (altenative)
+                Console.WriteLine("Login");
+                Console.Write($"Username: ");
+                user.Username = Console.ReadLine();
+                Console.Write($"Password: ");
+                user.Password = Console.ReadLine();
+
+                var result = manager.Login(user);
+                if (result == Result.IsSuccess)
                 {
-                    case "1":
-                        Login();
-                        break;
-                    case "2":
-                        CreateAccount();
-                        break;
-                    case "3":
-                        Console.WriteLine("Press any key to exit!");
-                        Console.ReadKey();
-                        loop = true;
-                        break;
-                    default:
-                        loop = false;
-                        break;
-                }
-            } while (loop != true);
-
-        }
-        static void CreateAccount()
-        {
-            bool loop = false;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("Username:");
-                string username = Console.ReadLine();
-                Console.WriteLine("Your name:");
-                string name = Console.ReadLine();
-                Console.WriteLine("Password:");
-                string password = Console.ReadLine();
-
-                if (name != null && username != null && password != null)
-                {
-                    var user = new User();
-                    user.Name = name;
-                    user.Username = username;
-                    user.Password = password;
-
-                    if (database.Users.Any(u => u.Username == user.Username) == false)
-                    {
-                        database.Users.Add(user);
-                        database.SaveChanges();
-                        loop = true;
-                    }
-                    else
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Username already exit!");
-                        Console.WriteLine("Try again with another username.");
-                        Console.ReadKey();
-                        loop = false;
-                    }
+                    var myProfile = database.Users.First(u => u.Username == user.Username && u.Password == user.Password);
+                    Profile(myProfile);
                 }
                 else
                 {
                     Console.Clear();
-                    Console.WriteLine("Please fill in all the information!");
-                    Console.ReadKey();
-                    loop = false;
+                    Console.WriteLine("Invalid!");
+                    Console.WriteLine("Do you want to create a new account? (yes or no)");
+
+                    string answer = Console.ReadLine();
+                    if (answer.ToUpper() == "YES") CreateAccount(); else loop = false;
                 }
             } while (loop != true);
         }
-        static void Login()
+        public static void CreateAccount()
         {
-            bool loginStatus = false;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("LOGIN TO FACEBOOK");
-                Console.WriteLine($"Username: ");
-                string username = Console.ReadLine();
-                Console.WriteLine($"Password: ");
-                string password = Console.ReadLine();
-
-                if (database.Users.Any(u => u.Username == username && u.Password == password))
-                {
-                    var user = database.Users.First(u => u.Username == username && u.Password == password);
-                    Profile(user);
-                }
-                else if (!database.Users.Any(u => u.Username == username && u.Password == password))
-                {
-                    Console.WriteLine("No account was found!");
-                    Console.WriteLine("Press ESC to go back to menu or press any key to try again");
-                    var key = Console.ReadKey();
-                    if (key.Key == ConsoleKey.Escape)
-                    {
-                        loginStatus = true;
-                    }
-                    else
-                        loginStatus = false;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid username or password!");
-                    Console.WriteLine("Press any key to try again.");
-                    Console.ReadKey();
-                    loginStatus = false;
-                }
-            } while (loginStatus != true);
-        }
-        static void Profile(User me)
-        {
-            var user = database.Users.Include(f => f.Following).Include(f => f.Follower).First(u => u == me);
-            var posters = database.Posters.Where(u => u.PostedBy == user).ToList();
-
             bool loop = false;
             do
             {
                 Console.Clear();
-                Console.WriteLine("Welcome to Fakebook!");
-                Console.WriteLine("My profile:");
-                Console.WriteLine($"Hello {user.Name}!");
-                Console.WriteLine($"My poster {posters.Count}");
+                Console.WriteLine("Create new account");
+                Console.Write("Username:");
+                user.Username = Console.ReadLine();
+                Console.Write("Password:");
+                user.Password = Console.ReadLine();
 
-                Console.WriteLine("");
-                Console.WriteLine("Timeline");
-                Console.WriteLine("Friends");
-                Console.WriteLine("Follower");
-                Console.WriteLine("Following");
-                Console.WriteLine("Create new post");
-                Console.WriteLine("My Chats");
-                Console.WriteLine("Start chat");
-                Console.WriteLine("Log out");
-
-                Console.Write($">{user.Username} ");
-                string alternative = Console.ReadLine();
-
-                string commandString = alternative.Remove(alternative.IndexOf(' '));
-                string User = alternative.Remove(0, commandString.Length + 1);
-                command command = (command)Enum.Parse(typeof(command), commandString);
-                Console.WriteLine(alternative);
-
-                //command command = (command)Enum.Parse(typeof(command), alternative);
-
-                Console.Clear();
-                switch (command)
+                if (user.Username != "" && user.Password != "")
                 {
-                    case command.timeline:
-
-                        Console.WriteLine("TimeLine");
-                        break;
-                    case command.follow:
-                        Console.WriteLine("1 Follow someone");
-                        Console.WriteLine("2 Unfollow someone");
-                        Console.WriteLine("");
-
-                        FriendsList();
-
-                        Console.Write($">{user.Username} ");
-
-                        var selectedOption = Console.ReadKey();
-                        if (selectedOption.Key == ConsoleKey.NumPad1)
-                        {
-                            var userbehavior = new UserBehavior(database);
-                            Console.WriteLine("");
-
-                            Console.WriteLine("Who do you want to follow?");
-
-                            Console.Write($">{user.Username} ");
-                            string anotherUser = Console.ReadLine();
-
-                            bool result = userbehavior.StartFollow(user, anotherUser);
-                            if (result != true)
-                            {
-                                Console.WriteLine("You did not write the right name Or you already follow this user!");
-                                Console.ReadKey();
-                            }
-                            else
-                            {
-                                Console.WriteLine("Successfully following!");
-                                Console.ReadKey();
-                            }
-                        }
-                        else if (selectedOption.Key == ConsoleKey.NumPad2)
-                        {
-
-                        }
-
-                        break;
-                    case command.followers:
-                        Console.WriteLine("My follower");
-                        foreach (var myself in MyFollowList(user, 1))
-                        {
-                            if (myself.Follower.Count != 0)
-                            {
-                                foreach (var anotherUser in myself.Follower)
-                                {
-                                    Console.WriteLine($"{anotherUser.Username}");
-                                }
-                            }
-                            else
-                                Console.WriteLine("No follower!");
-                        }
+                    var result = manager.CreateNewAccount(user);
+                    if (result == Result.IsSuccess)
+                    {
+                        var myProfile = database.Users.First(u => u.Username == user.Username && u.Password == user.Password);
+                        Profile(myProfile);
+                    }
+                    else
+                    {
+                        Console.WriteLine("This username already exit! try again!");
                         Console.ReadKey();
-                        break;
-                    case command.post:
-                        CreatePost(user);
-                        break;
-                    case command.chats:
-                        Chats(user);
-                        loop = false;
-                        break;
-                    case command.friends:
-                        var userBehavior = new UserBehavior(database);
-                        FriendsList();
-                        Console.WriteLine("");
-                        Console.WriteLine("To:");
-                        Console.Write($"{user.Username} > ");
-
-                        string to = Console.ReadLine();
-
-                        Console.WriteLine("Text:");
-                        Console.Write($"> {user.Username} ");
-
-                        string message = Console.ReadLine();
-
-                        var anotheruser = database.Users.First(u => u.Username == to);
-                        userBehavior.SendMessage(anotheruser, user, message);
-                        loop = true;
-                        break;
-                    default:
-                        loop = false;
-                        break;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Please enter all infromations!");
+                    Console.ReadKey();
+                    loop = false;
                 }
 
-
-                //switch (alternative)
-                //{
-                //    case "1":
-                //        Console.WriteLine("TimeLine");
-                //        TimeLine();
-                //        break;
-                //    case "2":
-                //        Console.WriteLine("Get a new friend by follow someone in this list");
-                //        Console.WriteLine("Chose your options!");
-                //        Console.WriteLine("1 Follow someone");
-                //        Console.WriteLine("2 Unfollow someone");
-                //        Console.WriteLine("3 Go back");
-                //        Console.WriteLine("");
-
-                //        FriendsList();
-
-                //        Console.Write($">{user.Username} ");
-
-                //        var selectedOption = Console.ReadKey();
-                //        if (selectedOption.Key == ConsoleKey.NumPad1)
-                //        {
-                //            var userbehavior = new UserBehavior(database);
-                //            Console.WriteLine("");
-
-                //            Console.WriteLine("Who do you want to follow?");
-
-                //            Console.Write($">{user.Username} ");
-                //            string anotherUser = Console.ReadLine();
-
-                //            bool result = userbehavior.StartFollow(user, anotherUser);
-                //            if (result != true)
-                //            {
-                //                Console.WriteLine("You did not write the right name Or you already follow this user!");
-                //                Console.ReadKey();
-                //            }
-                //            else
-                //            {
-                //                Console.WriteLine("Successfully following!");
-                //                Console.ReadKey();
-                //            }
-                //        }
-                //        else if (selectedOption.Key == ConsoleKey.NumPad2)
-                //        {
-
-                //        }
-
-                //        break;
-                //    case "3":
-                //        Console.WriteLine("My follower");
-                //        foreach (var myself in MyFollowList(user, 1))
-                //        {
-                //            if (myself.Follower.Count != 0)
-                //            {
-                //                foreach (var anotherUser in myself.Follower)
-                //                {
-                //                    Console.WriteLine($"{anotherUser.Username}");
-                //                }
-                //            }
-                //            else
-                //                Console.WriteLine("No follower!");
-                //        }
-                //        Console.ReadKey();
-                //        break;
-                //    case "4":
-                //        break;
-                //    case "5":
-                //        CreatePost(user);
-                //        break;
-                //    case "6":
-                //        Chats(user);
-                //        loop = false;
-                //        break;
-                //    case "7":
-                //        var userBehavior = new UserBehavior(database);
-                //        FriendsList();
-                //        Console.WriteLine("");
-                //        Console.WriteLine("To:");
-                //        Console.Write($"{user.Username} > ");
-
-                //        string to = Console.ReadLine();
-
-                //        Console.WriteLine("Text:");
-                //        Console.Write($"> {user.Username} ");
-
-                //        string message = Console.ReadLine();
-
-                //        var anotheruser = database.Users.First(u => u.Username == to);
-                //        userBehavior.SendMessage(anotheruser, user, message);
-                //        break;
-                //    case "8":
-                //        loop = true;
-                //        break;
-                //    default:
-                //        loop = false;
-                //        break;
-                //}
             } while (loop != true);
         }
-        static void Chats(User me)
+        public static void Profile(User me)
+        {
+            var myProfile = database.Users.Include(f => f.Following).Include(f => f.Follower).First(u => u == me);
+            bool loop = false;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("COMMAND LIST: [Post, Timeline, Follow, Wall, Post @username, friendlist, Log out]");
+                Console.WriteLine("");
+                Console.WriteLine("Welcome to facebook!");
+                Console.WriteLine("My profile:");
+                Console.WriteLine($"Hello {myProfile.Username}!");
+                Console.WriteLine("");
+                Console.Write($"> {user.Username} /");
+                string alternative = Console.ReadLine();
+
+                if (alternative != "")
+                {
+                    Console.Clear();
+                    Command commando = new Command();
+                    try
+                    {
+                        commandString = alternative.Remove(alternative.IndexOf(' '));
+                        userString = alternative.Remove(0, commandString.Length + 1);
+                        commando = (Command)Enum.Parse(typeof(Command), commandString);
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("No command was found!");
+                        Console.ReadKey();
+                        loop = false;
+                    }
+                    switch (commando)
+                    {
+                        case Command.timeline:
+                            Timeline(me, userString);
+                            Console.ReadKey();
+                            break;
+                        case Command.follow:
+                            Follow(user, userString);
+                            Console.ReadKey();
+                            break;
+                        case Command.post:
+                            userbehavior.Post(user, userString);
+                            Console.ReadKey();
+                            break;
+                        case Command.wall:
+                            Wall(user);
+                            loop = false;
+                            break;
+                        case Command.send_message:
+                            break;
+                        case Command.friendlist:
+                            FriendsList();
+                            Console.ReadKey();
+                            break;
+                        default:
+                            loop = false;
+                            break;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid command!");
+                    Console.ReadKey();
+                }
+            } while (loop != true);
+        }
+        public static void Timeline(User me, string username)
+        {
+            var userTimeline = userbehavior.GetTimeline(username);
+            var result = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == username);
+
+            Console.WriteLine($"{result.Username} is following:");
+            if (result.Follower.Any(u => u.Username == me.Username) == true)
+            {
+                if (result.Following is null)
+                {
+                    Console.WriteLine($"{result.Username} did not follow any one");
+                }
+                else
+                {
+                    foreach (var user in result.Following)
+                    {
+                        Console.WriteLine($"{user.Username}");
+                    }
+                }
+            }
+            Console.WriteLine($"{result.Username}s Timeline:");
+            foreach (var post in userTimeline)
+            {
+                Console.WriteLine($"{post.Datum.ToString("f")} {post.PostedBy.Username}: {post.Message}");
+            }
+            Console.ReadKey();
+        }
+        public static void Follow(User me, string username)
+        {
+            var result = userbehavior.StartFollow(me, username);
+            if (result == Result.IsSuccess)
+            {
+                Console.Clear();
+                Console.WriteLine("Successfully following!");
+                Console.ReadKey();
+                Console.Clear();
+            }
+            else
+            {
+                Console.WriteLine("You did not write the right name Or you already follow this user!");
+                Console.ReadKey();
+            }
+
+        }
+        public static void Chats(User me)
         {
             var user = database.Users.Include(f => f.Following).Include(f => f.Follower).First(u => u == me);
 
@@ -372,13 +220,13 @@ namespace TDDInlämningsuppgift
                         {
                             if (chat.SendFromId != me.Id && chat.SendTo == me)
                             {
-                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Name})");
+                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Username})");
                             }
-                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Name})");
+                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Username})");
                         }
                         else if (chat.SendFromId == me.Id)
                         {
-                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u == chat.SendTo).Name})");
+                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u == chat.SendTo).Username})");
                         }
                     }
 
@@ -402,10 +250,10 @@ namespace TDDInlämningsuppgift
                 }
             } while (loop != false);
         }
-        static void ChatNow(User me, string name)
+        public static void ChatNow(User me, string username)
         {
             var userBehavior = new UserBehavior(database);
-            var anotherUser = database.Users.First(u => u.Name == name);
+            var anotherUser = database.Users.First(u => u.Username == username);
             List<Chat> chatList = new List<Chat>();
 
             bool loop = true;
@@ -435,16 +283,16 @@ namespace TDDInlämningsuppgift
                         {
                             if (chat.SendFromId == me.Id)
                             {
-                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({chat.SendTo.Name}) {chat.Text}");
+                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({chat.SendTo.Username}) {chat.Text}");
                             }
                             else if (chat.SendTo != me && chat.SendFromId == me.Id)
                             {
-                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Name}) {chat.Text}");
+                                Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Username}) {chat.Text}");
                             }
                         }
                         else if (chat.SendTo.Id == me.Id && chat.SendFromId != me.Id)
                         {
-                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Name}) {chat.Text}");
+                            Console.WriteLine($"{chat.Date.ToString("g")} AM : ({database.Users.First(u => u.Id == chat.SendFromId).Username}) {chat.Text}");
                         }
                     }
                     Console.Write($">{me.Username}/ ");
@@ -469,13 +317,13 @@ namespace TDDInlämningsuppgift
                 }
             } while (loop != false);
         }
-        static void FriendsList()
+        public static void FriendsList()
         {
             foreach (var users in database.Users.Include(f => f.Follower).Include(f => f.Following).ToList())
             {
                 if (users.Following != null || users.Follower != null)
                 {
-                    Console.WriteLine($"{users.Username} Follower: {users.Follower.Count()} Following: {users.Following.Count()}");
+                    Console.WriteLine($"{users.Username} Follower: {users.Follower.Count} Following: {users.Following.Count()}");
                 }
                 else
                 {
@@ -483,62 +331,13 @@ namespace TDDInlämningsuppgift
                 }
             }
         }
-        static List<User> MyFollowList(User user, int options)
+        public static void Wall(User me)
         {
-            if (options == 1)
+            var users = database.Users.Include(f => f.Following).Include(f => f.Follower).Where(u => u == me).ToList();
+            foreach (var user in users)
             {
-                return database.Users.Include(f => f.Follower).Where(u => u == user).ToList();
+                Console.WriteLine($"{user.Username}");
             }
-            else
-                return database.Users.Include(f => f.Following).Where(u => u == user).ToList();
-        }
-        //static void TimeLine()
-        //{
-        //    var userBehavior = new UserBehavior(database);
-        //    //var postList = userBehavior.GetTimeLine();
-
-        //    foreach (var post in postList)
-        //    {
-        //        Console.WriteLine($"Posted by: {post.PostedBy.Name} {post.Datum.ToString("d")}");
-        //        Console.WriteLine($"{post.Datum.ToString("t")}: {post.Message}");
-        //        Console.WriteLine("");
-        //    }
-        //    Console.WriteLine("Press any key to go back......");
-        //    Console.ReadKey();
-        //}
-        static void CreatePost(User user)
-        {
-            var post = new Post();
-
-            bool loop = false;
-            do
-            {
-                Console.WriteLine("Write your post:");
-                post.Message = Console.ReadLine();
-                post.PostedBy = database.Users.First(u => u.Username == user.Username);
-                post.Datum = DateTime.Now;
-
-                var userBehavior = new UserBehavior(database);
-                var result = userBehavior.Post(post);
-
-                if (result == true)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Successfully added new post");
-                    Console.WriteLine("Press any key to go back to profile");
-                    Console.ReadKey();
-                    loop = true;
-                }
-                else
-                {
-                    Console.Clear();
-                    Console.WriteLine("This post already exist! Try again");
-                    Console.ReadKey();
-                    loop = false;
-                }
-
-            } while (loop != true);
-
         }
     }
 }
