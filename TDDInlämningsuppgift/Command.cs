@@ -8,16 +8,15 @@ namespace TDDInlämningsuppgift
 {
     public enum Command
     {
-        timeLine,
+        timeline,
         post,
         send_message,
         view_messages,
-        timeline,
         follow,
         wall,
-        friendlist
+        log_out
     }
-    public enum Result
+    public enum ResultStatus
     {
         IsSuccess,
         IsFaild,

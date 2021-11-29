@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TDDInlämningsuppgift", "TD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestUserBehavior", "TestUserBehavior\TestUserBehavior.csproj", "{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAccountManagement", "TestAccountManagement\TestAccountManagement.csproj", "{D2F7E084-B78A-44B8-96B7-1CEA6BEF5B14}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB85BEC1-E5DE-41E0-A70D-90EDB0117CDE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D2F7E084-B78A-44B8-96B7-1CEA6BEF5B14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2F7E084-B78A-44B8-96B7-1CEA6BEF5B14}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2F7E084-B78A-44B8-96B7-1CEA6BEF5B14}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2F7E084-B78A-44B8-96B7-1CEA6BEF5B14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,7 +27,7 @@ namespace TDDInlämningsuppgift.Data
         public static void SeedData()
         {
             var database = new ApplicationDb();
-            if (!database.Users.Any(u => u.Username == "Alice123" || u.Username == "Bob123" || u.Username == "Charlie123"))
+            if ((database.Users.Any(u => u.Username == "Alice") && database.Users.Any(u => u.Username == "Bob") && database.Users.Any(u => u.Username == "Charlie") && database.Users.Any(u => u.Username == "Mallory")) == false)
             {
                 database.Users.Add(new User { Username = "Alice", Password = "1234" });
                 database.Users.Add(new User { Username = "Bob", Password = "5678" });
