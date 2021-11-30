@@ -136,7 +136,7 @@ namespace TDDInlämningsuppgift
             }
             else
             {
-                Console.WriteLine("Failed post");
+                Console.WriteLine("Failed post or could not find the user you want to link to!");
             }
         }
         public static void Timeline(string username)

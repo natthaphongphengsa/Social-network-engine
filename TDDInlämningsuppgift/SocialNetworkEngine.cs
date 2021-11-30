@@ -44,6 +44,21 @@ namespace TDDInlämningsuppgift
         {
             if (!database.Posters.Include(u => u.PostedBy).Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy))
             {
+                string message = post.Message;
+                if (message.IndexOf('@') != -1)
+                {
+                    string textString = message.TrimStart('@');
+                    string userString = textString.Remove(textString.IndexOf(' '));
+                    if (!database.Users.Any(u => u.Username == userString))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        post.Message = textString;
+                        return true;
+                    }
+                }
                 database.Posters.Add(post);
                 database.SaveChanges();
                 return true;
