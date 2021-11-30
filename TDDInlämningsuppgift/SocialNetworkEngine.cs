@@ -16,28 +16,28 @@ namespace TDDInlämningsuppgift
         {
             database = dbcontext;
         }
-        public ResultStatus Login(string username, string userPassword)
+        public resultStatus Login(string username, string userPassword)
         {
             if (database.Users.Any(u => u.Username == username && u.Password == userPassword))
             {
-                return ResultStatus.IsSuccess;
+                return resultStatus.IsSuccess;
             }
             else
             {
-                return ResultStatus.IsFaild;
+                return resultStatus.IsFaild;
             }
         }
-        public ResultStatus CreateNewAccount(User user)
+        public resultStatus CreateNewAccount(User user)
         {
             if (!database.Users.Any(u => u.Username == user.Username))
             {
                 database.Users.Add(user);
                 database.SaveChanges();
-                return ResultStatus.IsSuccess;
+                return resultStatus.IsSuccess;
             }
             else
             {
-                return ResultStatus.IsFaild;
+                return resultStatus.IsFaild;
             }
         }
         public bool Post(Post post)
@@ -53,24 +53,38 @@ namespace TDDInlämningsuppgift
                 return false;
             }
         }
-        public void SendMessage(User to, User from, string message)
+        public resultStatus SendMessage(string to, string from, string message)
         {
-            database.Chats.Add(new Chat()
+            var user1 = database.Users.FirstOrDefault(u => u.Username == to);
+            var user2 = database.Users.FirstOrDefault(u => u.Username == from);
+            var chat = database.Chats.FirstOrDefault(c => c.Text == message);
+
+            if (user1 != null && user1 != null && chat == null && message != "")
             {
-                SendFromId = from.Id,
-                SendTo = database.Users.First(u => u.Id == to.Id),
-                Date = DateTime.Now,
-                Text = message,
-            });
-            database.SaveChanges();
+                database.Chats.Add(new Chat()
+                {
+                    SendFromId = database.Users.First(u => u.Username == from).Id,
+                    SendTo = database.Users.First(u => u.Username == to),
+                    Date = DateTime.Now,
+                    Text = message,
+                });
+                database.SaveChanges();
+                return resultStatus.IsSuccess;
+            }
+            else
+            {
+                return resultStatus.IsFaild;
+            }
         }
         public List<User> StartFollow(User me, string user)
         {
             if (database.Users.Any(u => u.Username == me.Username) && database.Users.Any(u => u.Username == user))
             {
-                //var user = database.Users.Include(u => u.Following).Include(u => u.Follower).First(u => u.Username == me.Username);
-                List<User> anotheruser = database.Users.Include(u => u.Following).Include(u => u.Follower).Where(u => u.Username == user).ToList();
-                
+                List<User> anotheruser = database.Users
+                    .Include(u => u.Following)
+                    .Include(u => u.Follower)
+                    .Where(u => u.Username == user).ToList();
+
                 if (!anotheruser.Any(u => u == me))
                 {
                     if (!me.Following.Any(u => u == anotheruser.Where(u => u.Username == user)))
@@ -87,9 +101,13 @@ namespace TDDInlämningsuppgift
             else
                 return null;
         }
-        public List<Post> GetTimeline(string user)
+        public List<Post> GetTimeline(string username)
         {
-            var postList = database.Posters.Include(user => user.PostedBy).Include(f => f.PostedBy.Following).Include(f => f.PostedBy.Follower).Where(u => u.PostedBy.Username == user).ToList();
+            var postList = database.Posters
+                .Include(user => user.PostedBy)
+                .Include(f => f.PostedBy.Following)
+                .Include(f => f.PostedBy.Follower)
+                .Where(u => u.PostedBy.Username == username).ToList();
             return postList;
         }
         public List<User> GetFollowingList(string username)
@@ -97,9 +115,9 @@ namespace TDDInlämningsuppgift
             var followingList = database.Users.FirstOrDefault(u => u.Username == username).Following;
             return followingList;
         }
-        public List<User> ViewUserWall(User user)
+        public List<User> ViewUserWall(string user)
         {
-            return database.Users.Include(f => f.Follower).Include(f => f.Following).Select(u => u.Follower.FirstOrDefault(u => u == user)).ToList(); ;
+            return database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == user).Following.ToList();
         }
     }
 }

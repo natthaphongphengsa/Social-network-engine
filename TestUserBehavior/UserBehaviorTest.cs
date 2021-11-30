@@ -36,14 +36,20 @@ namespace TestUserBehavior
         }
 
         [TestMethod]
-        [DataRow(ResultStatus.IsFaild, "Charlie", "Alice")]
-        public void FollowTest(ResultStatus ExpectedValue, string user, string anotherUser)
+        [DataRow(resultStatus.IsFaild, "Charlie", "Alice")]
+        public void FollowTest(resultStatus ExpectedValue, string user, string anotherUser)
         {
             //var database = new ApplicationDb();
             User me = database.Users.First(u => u.Username == user);
-
             var userBehavior = new SocialNetworkEngine(database);
-            var actual = userBehavior.StartFollow(me, anotherUser);
+            resultStatus actual;
+
+            if (userBehavior.StartFollow(me, anotherUser) != null)
+            {
+                actual = resultStatus.IsFaild;
+            }
+            else
+                actual = resultStatus.IsSuccess;
 
             Assert.AreEqual(ExpectedValue, actual);
         }
@@ -59,22 +65,30 @@ namespace TestUserBehavior
         }
 
         [TestMethod]
-        [DataRow(ResultStatus.IsSuccess,"Charlie")]
-        public void WallTest(string username)
+        [DataRow(2, "Alice")]
+        [DataRow(2, "Bob")]
+        [DataRow(1, "Charlie")]
+        public void WallTest(int expected, string username)
         {
+            List<User> actualUsers = socialNetworkEngine.ViewUserWall(username);
 
+            Assert.AreEqual(expected, actualUsers.Count());
         }
+
         [TestMethod]
-        public void SendMessageTest()
+        [DataRow(resultStatus.IsFaild, "Alice", "Mallory", "Hello Alice! how are you today?")]
+        [DataRow(resultStatus.IsFaild, "Mallory", "Alice", "Hello mallory! I am fine, how about you?")]
+        public void SendMessageTest(resultStatus expectedResult, string sendTo, string sendFrom, string message)
         {
-            Assert.Fail();
+            var actualResult = socialNetworkEngine.SendMessage(sendTo, sendFrom, message);
+            Assert.AreEqual(expectedResult, actualResult);
         }
 
         [TestMethod]
-        [DataRow(ResultStatus.IsSuccess, "Alice", "1234")]
-        [DataRow(ResultStatus.IsFaild, "Natta", "1321")]
-        [DataRow(ResultStatus.IsSuccess, "Bob", "5678")]
-        public void LoginTest(ResultStatus expextedResult, string username, string password)
+        [DataRow(resultStatus.IsSuccess, "Alice", "1234")]
+        [DataRow(resultStatus.IsFaild, "Natta", "1321")]
+        [DataRow(resultStatus.IsSuccess, "Bob", "5678")]
+        public void LoginTest(resultStatus expextedResult, string username, string password)
         {
             var actualResult = socialNetworkEngine.Login(username, password);
 
@@ -82,16 +96,15 @@ namespace TestUserBehavior
         }
 
         [TestMethod]
-        [DataRow(ResultStatus.IsFaild, "Alice", "1234")]
-        public void CreateAccountTest(ResultStatus expectedValue, string testUsernameValue, string testPasswordValue)
+        [DataRow(resultStatus.IsFaild, "Alice", "1234")]
+        public void CreateAccountTest(resultStatus expectedValue, string testUsernameValue, string testPasswordValue)
         {
-            //Arrange
             User newUser = new User();
             newUser.Username = testUsernameValue;
             newUser.Password = testPasswordValue;
-            //Act
-            ResultStatus result = socialNetworkEngine.CreateNewAccount(newUser);
-            //Assert
+
+            resultStatus result = socialNetworkEngine.CreateNewAccount(newUser);
+
             Assert.AreEqual(expectedValue, result);
         }
     }

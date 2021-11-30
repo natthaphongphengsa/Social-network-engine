@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TDDInlämningsuppgift
 {
-    public enum Command
+    public enum command
     {
         timeline,
         post,
@@ -16,7 +16,7 @@ namespace TDDInlämningsuppgift
         wall,
         log_out
     }
-    public enum ResultStatus
+    public enum resultStatus
     {
         IsSuccess,
         IsFaild,
