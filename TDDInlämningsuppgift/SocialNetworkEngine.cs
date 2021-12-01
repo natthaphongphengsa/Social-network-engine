@@ -27,48 +27,47 @@ namespace TDDInlämningsuppgift
                 return resultStatus.IsFaild;
             }
         }
-        public resultStatus CreateNewAccount(User user)
+        public User CreateNewAccount(string username, string password)
         {
-            if (!database.Users.Any(u => u.Username == user.Username))
+            User newUser = new User()
             {
-                database.Users.Add(user);
-                database.SaveChanges();
-                return resultStatus.IsSuccess;
-            }
-            else
-            {
-                return resultStatus.IsFaild;
-            }
+                Username = username,
+                Password = password
+            };
+            return newUser;
         }
-        public bool Post(Post post)
+        public Post Post(string username, string message)
         {
-            if (!database.Posters.Include(u => u.PostedBy).Any(p => p.Message == post.Message && p.PostedBy == post.PostedBy))
+            var user = database.Users.First(u => u.Username == username);
+
+            Post newPost = new Post();
+
+            //string newMessage = "";
+            if (message.IndexOf('@') != -1)
             {
-                string message = post.Message;
-                if (message.IndexOf('@') != -1)
+                string messageString = message.TrimStart('@');
+                string userString = messageString.Remove(messageString.IndexOf(' '));
+                if (database.Users.Any(u => u.Username == userString))
                 {
-                    string textString = message.TrimStart('@');
-                    string userString = textString.Remove(textString.IndexOf(' '));
-                    if (!database.Users.Any(u => u.Username == userString))
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        post.Message = textString;
-                        return true;
-                    }
+                    newPost.Message = messageString;
+                    newPost.Datum = DateTime.Now;
+                    newPost.PostedBy = user;
+                    return newPost;
                 }
-                database.Posters.Add(post);
-                database.SaveChanges();
-                return true;
+                else
+                {
+                    return null;
+                }
             }
             else
             {
-                return false;
+                newPost.Message = message;
+                newPost.PostedBy = user;
+                newPost.Datum = DateTime.Now;
+                return newPost;
             }
         }
-        public resultStatus SendMessage(string to, string from, string message)
+        public Chat SendMessage(string to, string from, string message)
         {
             var user1 = database.Users.FirstOrDefault(u => u.Username == to);
             var user2 = database.Users.FirstOrDefault(u => u.Username == from);
@@ -76,45 +75,47 @@ namespace TDDInlämningsuppgift
 
             if (user1 != null && user1 != null && chat == null && message != "")
             {
-                database.Chats.Add(new Chat()
-                {
-                    SendFromId = database.Users.First(u => u.Username == from).Id,
-                    SendTo = database.Users.First(u => u.Username == to),
-                    Date = DateTime.Now,
-                    Text = message,
-                });
-                database.SaveChanges();
-                return resultStatus.IsSuccess;
+                Chat newChat = new Chat();
+                newChat.SendFromId = database.Users.First(u => u.Username == from).Id;
+                newChat.SendTo = database.Users.First(u => u.Username == to);
+                newChat.Date = DateTime.Now;
+                newChat.Text = message;
+                //database.Chats.Add(new Chat()
+                //{
+                //    SendFromId = database.Users.First(u => u.Username == from).Id,
+                //    SendTo = database.Users.First(u => u.Username == to),
+                //    Date = DateTime.Now,
+                //    Text = message,
+                //});
+                //database.SaveChanges();
+                return newChat;
             }
             else
             {
-                return resultStatus.IsFaild;
+                return null;
             }
         }
-        public List<User> StartFollow(User me, string user)
+        public User StartFollow(string user, string anotherUser)
         {
-            if (database.Users.Any(u => u.Username == me.Username) && database.Users.Any(u => u.Username == user))
+            if (database.Users.Any(u => u.Username == user) && database.Users.Any(u => u.Username == anotherUser))
             {
-                List<User> anotheruser = database.Users
-                    .Include(u => u.Following)
-                    .Include(u => u.Follower)
-                    .Where(u => u.Username == user).ToList();
+                User userToFollow = database.Users.First(u => u.Username == anotherUser);
 
-                if (!anotheruser.Any(u => u == me))
+                User myself = database.Users.Include(u => u.Following).First(u => u.Username == user);
+                if (!myself.Following.Any(u => u.Username == userToFollow.Username))
                 {
-                    if (!me.Following.Any(u => u == anotheruser.Where(u => u.Username == user)))
-                    {
-                        var userTofollow = database.Users.First(u => u.Username == user);
-                        me.Following.Add(userTofollow);
-                        database.Update(me);
-                        database.SaveChanges();
-                        return anotheruser;
-                    }
+                    myself.Following.Add(userToFollow);
+                    return myself;
                 }
-                return null;
+                else
+                {
+                    return null;
+                }
             }
             else
+            {
                 return null;
+            }
         }
         public List<Post> GetTimeline(string username)
         {
@@ -123,7 +124,11 @@ namespace TDDInlämningsuppgift
                 .Include(f => f.PostedBy.Following)
                 .Include(f => f.PostedBy.Follower)
                 .Where(u => u.PostedBy.Username == username).ToList();
-            return postList;
+            if (postList != null)
+            {
+                return postList;
+            }
+            return null;
         }
         public List<User> GetFollowingList(string username)
         {

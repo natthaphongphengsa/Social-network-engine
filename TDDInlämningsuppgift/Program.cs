@@ -64,14 +64,23 @@ namespace TDDInlämningsuppgift
                 Console.WriteLine("My profile:");
                 Console.WriteLine($"Hello {myProfile.Username}!");
                 Console.WriteLine("");
-                Console.Write($"> {user.Username} /");
+                Console.Write($"> {myProfile.Username} /");
                 string alternative = Console.ReadLine();
 
                 if (alternative.IndexOf(' ') != -1)
                 {
                     commandString = alternative.Remove(alternative.IndexOf(' '));
                     userString = alternative.Remove(0, commandString.Length + 1);
-                    commado = (command)Enum.Parse(typeof(command), commandString);
+                    try
+                    {
+                        commado = (command)Enum.Parse(typeof(command), commandString);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Could not found command and user");
+                        Console.ReadKey();
+                        break;
+                    }
                 }
                 else
                 {
@@ -125,13 +134,16 @@ namespace TDDInlämningsuppgift
         }
         public static void Post(User user)
         {
-            Post post = new Post();
-            post.Message = userString;
-            post.PostedBy = user;
-            post.Datum = DateTime.Now;
-            bool result = socialEngine.Post(post);
-            if (result == true)
+            //Post post = new Post();
+            //post.Message = userString;
+            //post.PostedBy = user;
+            //post.Datum = DateTime.Now;
+
+            Post result = socialEngine.Post(user.Username, userString);
+            if (result != null)
             {
+                database.Posters.Add(result);
+                database.SaveChanges();
                 Console.WriteLine("Successfully create a new post.");
             }
             else
@@ -142,17 +154,30 @@ namespace TDDInlämningsuppgift
         public static void Timeline(string username)
         {
             var userTimelineList = socialEngine.GetTimeline(username);
-            var userProfile = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == username);
-
-            Console.WriteLine("");
-
-            if (userTimelineList.Count == 0)
+            string anotherUsername = null;
+            if (userTimelineList.Count() != 0)
             {
-                Console.WriteLine($"{userProfile.Username} did not post anything.");
+                anotherUsername = database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == username).Username;
+            }
+
+            if (userTimelineList.Count() == 0)
+            {
+                if (user.Username == username)
+                {
+                    Console.WriteLine($"You did not post anything.");
+                }
+                else if (anotherUsername == null)
+                {
+                    Console.WriteLine("Could not found this user OR You did not follow this user!");
+                }
+                else
+                {
+                    Console.WriteLine($"{anotherUsername} did not post anything.");
+                }
             }
             else
             {
-                Console.WriteLine($"{userProfile.Username}s Timeline:");
+                Console.WriteLine($"{anotherUsername}s Timeline:");
                 foreach (var post in userTimelineList)
                 {
                     Console.WriteLine($"{post.Datum.ToString("f")} ({post.PostedBy.Username}): {post.Message}");
@@ -167,16 +192,18 @@ namespace TDDInlämningsuppgift
                 Console.Clear();
                 Console.WriteLine("Create new account");
                 Console.Write("Username:");
-                user.Username = Console.ReadLine();
+                string username = Console.ReadLine();
                 Console.Write("Password:");
-                user.Password = Console.ReadLine();
+                string password = Console.ReadLine();
 
-                if (user.Username != "" && user.Password != "")
+                if (username != "" && password != "")
                 {
-                    var result = socialEngine.CreateNewAccount(user);
-                    if (result == resultStatus.IsSuccess)
+                    var result = socialEngine.CreateNewAccount(username, password);
+                    if (!database.Users.Any(u => u.Username == result.Username))
                     {
-                        var myProfile = database.Users.First(u => u.Username == user.Username && u.Password == user.Password);
+                        database.Users.Add(result);
+                        database.SaveChanges();
+                        var myProfile = database.Users.First(u => u.Username == result.Username && u.Password == result.Password);
                         Profile(myProfile);
                     }
                     else
@@ -196,25 +223,55 @@ namespace TDDInlämningsuppgift
         }
         public static void Follow(User me, string username)
         {
-            var myFollowingList = socialEngine.StartFollow(me, username);
+            var myFollowingList = socialEngine.StartFollow(me.Username, username);
             if (myFollowingList != null)
             {
+                database.Users.Update(myFollowingList);
+                database.SaveChanges();
                 Console.Clear();
-                Console.WriteLine("Successfully following!");
+                Console.WriteLine($"Successfully following {username}!");
+                Console.WriteLine($"--- {username} following list ---");
                 Console.WriteLine("");
-                foreach (var anotherUser in myFollowingList)
+                var users = database.Users.Include(f => f.Following).Include(f => f.Follower).FirstOrDefault(u => u.Username == username);
+                if (users.Following != null)
                 {
-                    Console.WriteLine($"{anotherUser.Username} is following");
-                    foreach (var thirdUser in anotherUser.Following)
+                    foreach (var anotherUser in users.Following.ToList())
                     {
-                        Console.WriteLine($"{thirdUser.Username}");
+                        if (anotherUser != null)
+                        {
+                            Console.WriteLine($"{anotherUser.Username} is following: ");
+                            foreach (var thirdUser in database.Users.Include(f => f.Following).First(u => u.Username == anotherUser.Username).Following)
+                            {
+                                Console.WriteLine($"-{thirdUser.Username}");
+                            }
+                            Console.WriteLine("");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{anotherUser.Username} did not follow anyone yet!");
+                        }
                     }
                 }
-                Console.ReadKey();
+                else
+                {
+                    Console.WriteLine($"{username} did not follow anyone yet!");
+                }
             }
             else
             {
+                Console.Clear();
                 Console.WriteLine("You did not write the right name Or you already follow this user!");
+                if (database.Users.Any(u => u.Username == username))
+                {
+                    foreach (var user in database.Users.Include(f => f.Following).Where(u => u.Username == username))
+                    {
+                        Console.WriteLine($"{user.Username} is following:");
+                        foreach (var followingList in user.Following)
+                        {
+                            Console.WriteLine($"-{followingList.Username}");
+                        }
+                    }
+                }
             }
 
         }
@@ -223,12 +280,15 @@ namespace TDDInlämningsuppgift
             Console.Clear();
             Console.Write("Your message: ");
             string text = Console.ReadLine();
-            var result = socialEngine.SendMessage(sendto, Sendfrom, text);
-            if (result == resultStatus.IsSuccess)
+
+            var resultChat = socialEngine.SendMessage(sendto, Sendfrom, text);
+            if (resultChat != null)
             {
+                database.Chats.Add(resultChat);
+                database.SaveChanges();
                 Console.WriteLine("Successfully send message");
             }
-            else if (result == resultStatus.IsFaild)
+            else if (resultChat == null)
             {
                 Console.WriteLine("Failed to send the message");
             }
@@ -244,24 +304,46 @@ namespace TDDInlämningsuppgift
 
                 foreach (var chat in chatList)
                 {
-                    if (chat.SendTo == me || chat.SendFromId != me.Id)
+                    if (chat.SendFromId != me.Id)
                     {
-                        if (chat.SendFromId != me.Id && chat.SendTo == me)
-                        {
-                            var user = database.Users.Include(c => c.Chats).First(u => u.Id == chat.SendFromId);
-                            Console.WriteLine($"{chat.Date.ToString("g")} AM : Message from ({user.Username})! Message: {database.Chats.First(u => u.SendFromId == chat.SendFromId).Text}");
-                        }
-                        else
-                        {
-                            var user = database.Users.Include(c => c.Chats).First(u => u.Id == chat.SendFromId);
-                            Console.WriteLine($"{chat.Date.ToString("g")} AM : Message from ({user.Username})! Message: {database.Chats.First(u => u.SendFromId == chat.SendFromId).Text}");
-                        }
+                        Console.WriteLine(
+                            $"{chat.Date.ToString("g")} " +
+                            $"AM : Message from ({database.Users.First(u => u.Id == chat.SendFromId).Username})! " +
+                            $"Message: {chat.Text}");
+                    }
+                    else if (chat.SendTo == me)
+                    {
+                        Console.WriteLine(
+                            $"{chat.Date.ToString("g")} " +
+                            $"AM : Message from ({database.Users.First(u => u.Id == chat.SendFromId).Username})! " +
+                            $"Message: {chat.Text}");
                     }
                     else if (chat.SendFromId == me.Id)
                     {
-                        var user = database.Users.Include(c => c.Chats).First(u => u == chat.SendTo);
-                        Console.WriteLine($"{chat.Date.ToString("g")} AM : Message to ({user.Username})! Message: {database.Chats.First(u => u.SendTo == chat.SendTo).Text}");
+                        Console.WriteLine(
+                            $"{chat.Date.ToString("g")} " +
+                            $"AM : Message to ({database.Users.First(u => u == chat.SendTo).Username})! " +
+                            $"Message: {chat.Text}");
                     }
+
+                    //if (chat.SendTo == me)
+                    //{
+                    //    if (chat.SendFromId != me.Id && chat.SendTo == me)
+                    //    {
+                    //        var user = database.Users.Include(c => c.Chats).First(u => u.Id == chat.SendFromId);
+                    //        Console.WriteLine($"{chat.Date.ToString("g")} AM : Message from ({user.Username})! Message: {database.Chats.First(u => u.SendFromId == chat.SendFromId).Text}");
+                    //    }
+                    //    else
+                    //    {
+                    //        var user = database.Users.Include(c => c.Chats).First(u => u.Id == chat.SendFromId);
+                    //        Console.WriteLine($"{chat.Date.ToString("g")} AM : Message from ({user.Username})! Message: {database.Chats.First(u => u.SendFromId == chat.SendFromId).Text}");
+                    //    }
+                    //}
+                    //else if (chat.SendFromId == me.Id)
+                    //{
+                    //    var user = database.Users.Include(c => c.Chats).First(u => u == chat.SendTo);
+                    //    Console.WriteLine($"{chat.Date.ToString("g")} AM : Message to ({user.Username})! Message: {database.Chats.First(u => u.SendTo == chat.SendTo).Text}");
+                    //}
                 }
             }
             else
@@ -283,7 +365,7 @@ namespace TDDInlämningsuppgift
                     var innerUserList = socialEngine.ViewUserWall(user.Username);
                     if (innerUserList.Count != 0)
                     {
-                        Console.Write($"And {user.Username} is following: ");
+                        Console.Write($"{user.Username} is following: ");
                         foreach (var anotherUser in innerUserList)
                         {
                             Console.Write($"{anotherUser.Username}, ");
@@ -302,7 +384,9 @@ namespace TDDInlämningsuppgift
                 }
             }
             else
+            {
                 Console.WriteLine("Sorry no following list to show!");
+            }
         }
     }
 }

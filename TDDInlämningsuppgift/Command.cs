@@ -18,7 +18,7 @@ namespace TDDInlämningsuppgift
     }
     public enum resultStatus
     {
-        IsSuccess,
         IsFaild,
+        IsSuccess,
     }
 }
