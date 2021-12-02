@@ -38,7 +38,7 @@ namespace TDDInlämningsuppgift
                 var result = socialEngine.Login(user.Username, user.Password);
                 if (result == resultStatus.IsSuccess)
                 {
-                    var myProfile = database.Users.Include(f => f.Follower).Include(u => u.Following).Include(p => p.posters).First(u => u.Username == user.Username && u.Password == user.Password);
+                    var myProfile = database.Users.Include(f => f.Follower).Include(u => u.Following).Include(p => p.Posters).First(u => u.Username == user.Username && u.Password == user.Password);
                     Profile(myProfile);
                 }
                 else
@@ -180,7 +180,7 @@ namespace TDDInlämningsuppgift
                 Console.WriteLine($"{anotherUsername}s Timeline:");
                 foreach (var post in userTimelineList)
                 {
-                    Console.WriteLine($"{post.Datum.ToString("f")} ({post.PostedBy.Username}): {post.Message}");
+                    Console.WriteLine($"{post.Date.ToString("f")} ({post.PostedBy.Username}): {post.Message}");
                 }
             }
         }

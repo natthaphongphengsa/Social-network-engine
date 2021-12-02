@@ -50,7 +50,7 @@ namespace TDDInlämningsuppgift
                 if (database.Users.Any(u => u.Username == userString))
                 {
                     newPost.Message = messageString;
-                    newPost.Datum = DateTime.Now;
+                    newPost.Date = DateTime.Now;
                     newPost.PostedBy = user;
                     return newPost;
                 }
@@ -63,7 +63,7 @@ namespace TDDInlämningsuppgift
             {
                 newPost.Message = message;
                 newPost.PostedBy = user;
-                newPost.Datum = DateTime.Now;
+                newPost.Date = DateTime.Now;
                 return newPost;
             }
         }
@@ -137,7 +137,18 @@ namespace TDDInlämningsuppgift
         }
         public List<User> ViewUserWall(string user)
         {
-            return database.Users.Include(u => u.Follower).Include(u => u.Following).First(u => u.Username == user).Following.ToList();
+            //return database.Users.FirstOrDefault(u => u.Username == user).Following.Select(u=>u.Following);
+
+            return database.Users
+                .Include(u => u.Following)
+                .FirstOrDefault(u => u.Username == user)
+                .Following.ToList();
+            //.Following
+            //.Include(p => p.Posters)
+            //.Include(c => c.Chats)
+            //.Include(u => u.Follower)
+            //.Where(u => u.Username == user)
+
         }
     }
 }
