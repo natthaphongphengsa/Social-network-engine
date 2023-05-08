@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TDDInlämningsuppgift\TDDInlämningsuppgift.csproj" />
+    <ProjectReference Include="..\SocialNetworkEngine\SocialNetworkEngine.csproj" />
   </ItemGroup>
 
 </Project>

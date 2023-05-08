@@ -1,9 +1,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
-using TDDInlämningsuppgift;
-using TDDInlämningsuppgift.Data;
-using TDDInlämningsuppgift.Model;
+using SocialNetworkEngine;
+using SocialNetworkEngine.Data;
+using SocialNetworkEngine.Model;
 
 namespace SocialNetworkTDD
 {
@@ -11,7 +11,7 @@ namespace SocialNetworkTDD
     public class SocialNetWorkTestTDD
     {
         public ApplicationDb database = new ApplicationDb();
-        public SocialNetworkEngine socialNetworkEngine => new SocialNetworkEngine(database);
+        public SocialNetworkEngineIntegration socialNetworkEngine => new SocialNetworkEngineIntegration(database);
 
         [TestMethod]
         [DataRow(resultStatus.IsSuccess, "What a wonderfully sunny day!", "Alice")]
@@ -25,7 +25,7 @@ namespace SocialNetworkTDD
             expectedPost.Message = message;
             expectedPost.PostedBy = testUser;
 
-            var userBehavior = new SocialNetworkEngine(database);
+            var userBehavior = new SocialNetworkEngineIntegration(database);
             Post actualPost = userBehavior.Post(user, message);
 
             resultStatus actualResult;
@@ -49,7 +49,7 @@ namespace SocialNetworkTDD
             //var database = new ApplicationDb();
             //User me = database.Users.First(u => u.Username == user);
 
-            var userBehavior = new SocialNetworkEngine(database);
+            var userBehavior = new SocialNetworkEngineIntegration(database);
             var userProfile = userBehavior.StartFollow(user, anotherUser);
 
             resultStatus actual = new resultStatus();
